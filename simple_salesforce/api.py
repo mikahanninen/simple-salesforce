@@ -147,7 +147,8 @@ class Salesforce:
                 access_token = resp_json["access_token"]
                 self.logger.warn(resp_json)
                 self.logger.warn(access_token)
-                self.session_id = access_token
+                self.session_id = resp_json["access_token"]
+                self.sf_instance = resp_json["instance_url"]
             else:
                 raise ValueError(
                     "Could not get access token!\n%s" % self.print_error(response)
@@ -156,7 +157,7 @@ class Salesforce:
             self.auth_type = "password"
 
             # Pass along the username/password to our login helper
-            self.session_id, self.sf_instance = SalesforceLogin(
+            self.session_id, sf_instance = SalesforceLogin(
                 session=self.session,
                 username=username,
                 password=password,
@@ -165,6 +166,12 @@ class Salesforce:
                 proxies=self.proxies,
                 client_id=client_id,
                 domain=self.domain,
+            )
+            self.sf_instance = (
+                sf_instance.replace("http://", "")
+                .replace("https://", "")
+                .split("/")[0]
+                .replace("-api", "")
             )
 
         elif all(arg is not None for arg in (session_id, instance or instance_url)):
